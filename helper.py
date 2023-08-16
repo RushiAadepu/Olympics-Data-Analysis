@@ -41,12 +41,11 @@ def country_year_list(df):
 
     return years,country
 
-def data_over_time(df,col):
-
-    nations_over_time = df.drop_duplicates(['Year', col])['Year'].value_counts().reset_index().sort_values('index')
+def data_over_time(df, col):
+    nations_over_time = df.drop_duplicates(['Year', col])['Year'].value_counts().reset_index()
     nations_over_time.rename(columns={'index': 'Edition', 'Year': col}, inplace=True)
+    nations_over_time.sort_values(col, inplace=True)  # Sort by the 'Year' column
     return nations_over_time
-
 
 def most_successful(df, sport):
     temp_df = df.dropna(subset=['Medal'])
@@ -54,9 +53,10 @@ def most_successful(df, sport):
     if sport != 'Overall':
         temp_df = temp_df[temp_df['Sport'] == sport]
 
-    x = temp_df['Name'].value_counts().reset_index().head(15).merge(df, left_on='index', right_on='Name', how='left')[
-        ['index', 'Name_x', 'Sport', 'region']].drop_duplicates('index')
-    x.rename(columns={'index': 'Name', 'Name_x': 'Medals'}, inplace=True)
+    athlete_medals = temp_df.groupby('Name')['Medal'].count().reset_index()
+    athlete_medals = athlete_medals.sort_values('Medal', ascending=False).head(15)
+    x = athlete_medals.merge(df, on='Name', how='left')[['Name', 'Medal_x', 'Sport', 'region']].drop_duplicates('Name')
+    x.rename(columns={'Medal_x': 'Medals'}, inplace=True)
     return x
 
 def yearwise_medal_tally(df,country):
